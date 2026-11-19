@@ -1,0 +1,23 @@
+# build outputs
+build/
+__pycache__/
+*.py[cod]
+
+# apple artwork is not licensed for redistribution
+resources/emoji/emoji.pack
+
+# release artifacts
+*.deb
+*.ipa
+*.Packages
+
+# objects and archives, except the prebuilt arm mbedtls slices the app links
+*.o
+*.d
+*.a
+!vendor/mbedtls/lib/armv7/*.a
+!vendor/mbedtls/lib/arm64/*.a
+
+# clang serialized diagnostics
+/*.plist
+!/Info.plist

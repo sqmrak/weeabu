@@ -1,0 +1,10 @@
+Package: ru.sqmrak.weeabu
+Name: Weeabu
+Version: 1.0.0-stable
+Architecture: iphoneos-arm
+Description: native pikabu client for iOS 5+ (armv7 + arm64)
+Maintainer: sqmrak
+Author: sqmrak
+Section: Social
+Priority: optional
+Depends: firmware (>= 5.0)

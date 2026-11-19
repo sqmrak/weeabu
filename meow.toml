@@ -1,0 +1,444 @@
+# make everything outperform without waiting
+# by sqmrak :3
+
+# parallel incremental build of weeabu, see tools/meow
+# the compile graph, the packages and their checks live here, the host tests in tests/tests.toml
+
+# `meow build` with no name builds the deb
+default = ["deb"]
+
+include = ["tests/tests.toml"]
+
+[vars]
+TC = "${PK_TC:-${MEOW_TC}}"
+SDK_V7 = "${PK_SDK_V7:-${MEOW_SDK_ARMV7}}"
+SDK_V64 = "${PK_SDK_V64:-${MEOW_SDK_ARM64}}"
+# ios 5 needs the crt1.3.1.o start file, ld64 picks it by name only with the default start files
+CRT_V7 = "${PK_CRT_V7:-${SDK_V7}/usr/lib/crt1.3.1.o}"
+# the oldest sdk that still compiles this app is 6.1, compiling against it catches a call to an api
+# the ios 5 deployment target lacks. `meow build check-compat` runs that gate
+SDK_COMPAT = "${PK_SDK_COMPAT:-}"
+
+[slice.armv7]
+cc = "${TC}/clang"
+ar = "${TC}/llvm-ar"
+flags = ["-target", "arm-apple-darwin11", "-B", "${TC}", "-arch", "armv7",
+         "-miphoneos-version-min=5.0", "-isysroot", "${SDK}"]
+[slice.armv7.vars]
+SDK = "${SDK_V7}"
+
+[slice.arm64]
+cc = "${TC}/clang"
+ar = "${TC}/llvm-ar"
+flags = ["-target", "arm64-apple-darwin", "-B", "${TC}", "-arch", "arm64",
+         "-miphoneos-version-min=7.0", "-isysroot", "${SDK}"]
+[slice.arm64.vars]
+SDK = "${SDK_V64}"
+
+[target.app]
+slices = ["armv7", "arm64"]
+output = "build/${slice}/Weeabu"
+cflags = ["-fno-objc-arc", "-fblocks", "-Wall", "-Wextra", "-Wno-deprecated-declarations", "-O2",
+          "-DHAVE_CONFIG_H", "-Iapp", "-Icore", "-Icore/emoji", "-Ivendor/libwebp", "-Ivendor/mbedtls/include"]
+# mbedtls is static, so the only runtime dependencies are system frameworks
+ldflags = ["vendor/mbedtls/lib/${slice}/libmbedtls-${slice}.a",
+           "vendor/mbedtls/lib/${slice}/libmbedx509-${slice}.a",
+           "vendor/mbedtls/lib/${slice}/libmbedcrypto-${slice}.a",
+           "-framework", "UIKit", "-framework", "Foundation", "-framework", "CFNetwork", "-framework", "CoreGraphics", "-framework", "CoreText", "-framework", "QuartzCore", "-framework", "ImageIO", "-framework", "MobileCoreServices", "-framework", "MediaPlayer", "-framework", "AVFoundation", "-framework", "CoreMedia", "-framework", "AssetsLibrary"]
+[target.app.per_slice.armv7]
+ldflags = ["-nostartfiles", "${CRT_V7}"]
+[[target.app.src]]
+files = [
+  "vendor/libwebp/src/dec/alpha_dec.c",
+  "vendor/libwebp/src/dec/buffer_dec.c",
+  "vendor/libwebp/src/dec/frame_dec.c",
+  "vendor/libwebp/src/dec/idec_dec.c",
+  "vendor/libwebp/src/dec/io_dec.c",
+  "vendor/libwebp/src/dec/quant_dec.c",
+  "vendor/libwebp/src/dec/tree_dec.c",
+  "vendor/libwebp/src/dec/vp8_dec.c",
+  "vendor/libwebp/src/dec/vp8l_dec.c",
+  "vendor/libwebp/src/dec/webp_dec.c",
+  "vendor/libwebp/src/dsp/alpha_processing.c",
+  "vendor/libwebp/src/dsp/cpu.c",
+  "vendor/libwebp/src/dsp/dec.c",
+  "vendor/libwebp/src/dsp/dec_clip_tables.c",
+  "vendor/libwebp/src/dsp/filters.c",
+  "vendor/libwebp/src/dsp/lossless.c",
+  "vendor/libwebp/src/dsp/rescaler.c",
+  "vendor/libwebp/src/dsp/upsampling.c",
+  "vendor/libwebp/src/dsp/yuv.c",
+  "vendor/libwebp/src/utils/bit_reader_utils.c",
+  "vendor/libwebp/src/utils/color_cache_utils.c",
+  "vendor/libwebp/src/utils/filters_utils.c",
+  "vendor/libwebp/src/utils/huffman_utils.c",
+  "vendor/libwebp/src/utils/palette.c",
+  "vendor/libwebp/src/utils/quant_levels_dec_utils.c",
+  "vendor/libwebp/src/utils/rescaler_utils.c",
+  "vendor/libwebp/src/utils/random_utils.c",
+  "vendor/libwebp/src/utils/thread_utils.c",
+  "vendor/libwebp/src/utils/utils.c",
+  "core/pk_media_drag.c",
+  "core/pk_photo_zoom.c",
+  "core/pk_spring.c",
+  "core/pk_popup.c",
+  "core/pk_accent.c",
+  "core/pk_text.c",
+  "core/pk_url.c",
+  "core/pk_html.c",
+  "core/pk_feed.c",
+  "core/pk_story.c",
+  "core/pk_comments.c",
+  "core/pk_settings.c",
+  "core/pk_tls_rules.c",
+  "core/pk_v1_signature.c",
+  "core/pk_media_layout.c",
+  "core/pk_device.c",
+  "core/emoji/exteria_emoji.c",
+  "core/emoji/exteria_emoji_data.c",
+  "app/pk_mbedtls_time.c",
+  "app/pk_motion.m",
+  "app/pk_dialog.m",
+  "app/pk_profile.m",
+  "app/user_lists_vc.m",
+  "app/pk_emoji_label.m",
+  "app/pk_emoji_store.m",
+  "app/app_main.m",
+  "app/pk_lang.m",
+  "app/pk_http.m",
+  "app/pk_model.m",
+  "app/pk_v1.m",
+  "app/pk_api.m",
+  "app/pk_auth.m",
+  "app/pk_theme.m",
+  "app/pk_accent_editor.m",
+  "app/pk_accent_vc.m",
+  "app/pk_icons.m",
+  "app/pk_share.m",
+  "app/pk_image.m",
+  "app/pk_image_viewer.m",
+  "app/pk_media_viewer.m",
+  "app/pk_media_action_view.m",
+  "app/pk_media_slider.m",
+  "app/pk_tls_image.m",
+  "app/post_cell.m",
+  "app/login_vc.m",
+  "app/pk_video_player.m",
+  "app/about_vc.m",
+  "app/main_vc.m",
+  "app/feed_vc.m",
+  "app/search_vc.m",
+  "app/story_vc.m",
+  "app/pk_composer_vc.m",
+  "app/profile_vc.m",
+  "app/settings_vc.m",
+  "app/content_settings_vc.m",
+]
+
+[fat.app-fat]
+from = "app"
+output = "build/fat/Weeabu"
+sign = true
+
+[check.compat]
+slice = "armv7"
+sdk = "${SDK_COMPAT}"
+src = ["app/*.m"]
+headers = ["app/*.h"]
+cflags = ["-fno-objc-arc", "-fblocks", "-Wall", "-Wextra", "-Wno-deprecated-declarations", "-O2",
+          "-DHAVE_CONFIG_H", "-Iapp", "-Icore", "-Icore/emoji", "-Ivendor/libwebp", "-Ivendor/mbedtls/include"]
+
+# the version in the control file is the source, the plist release version must agree
+[step.version]
+run = [["${MEOW}", "check-version", "--expect", "${field:packaging/DEBIAN/control:Version}",
+        "--plist", "Info.plist", "GKReleaseVersion"]]
+stamp = "build/stamps/version"
+
+# release checks on the finished binary. the armv7 slice keeps the ios 5 target and may not link a
+# framework the old system does not ship
+[verify.check-app]
+file = "build/fat/Weeabu"
+slices = ["armv7", "arm64"]
+min_ios = "5.0"
+signed = true
+allow_dylibs = ["/usr/lib/libSystem.B.dylib", "/usr/lib/libobjc.A.dylib", "/System/Library/Frameworks/UIKit.framework/", "/System/Library/Frameworks/Foundation.framework/", "/System/Library/Frameworks/CFNetwork.framework/", "/System/Library/Frameworks/CoreGraphics.framework/", "/System/Library/Frameworks/CoreText.framework/", "/System/Library/Frameworks/QuartzCore.framework/", "/System/Library/Frameworks/ImageIO.framework/", "/System/Library/Frameworks/MobileCoreServices.framework/", "/System/Library/Frameworks/MediaPlayer.framework/", "/System/Library/Frameworks/AVFoundation.framework/", "/System/Library/Frameworks/CoreMedia.framework/", "/System/Library/Frameworks/AssetsLibrary.framework/", "/System/Library/Frameworks/CoreFoundation.framework/"]
+needs = ["app-fat"]
+
+# springboard icons for every slot, cut from the artwork. run `meow build icons-home` after it changes,
+# the pngs are committed
+[icons.home]
+master = "app/icons/weeabu.png"
+out = "app/icons"
+preset = "ios"
+sizes = { "Icon-master.png" = 512 }
+
+# an /Applications icon gets no corner mask from ios 6 and earlier, so every size carries its own
+# rounded corners and the gloss
+[icons.deb]
+master = "app/icons/weeabu.png"
+out = "resources/deb-icons"
+preset = "ios"
+round = 0.18
+overlay = "resources/icon-gloss.png"
+
+[image.mascot]
+from = "app/icons/source/weeabu-mascot.png"
+to = "app/icons/Icon-mascot.png"
+crop_alpha = 32
+fit = [24, 24]
+canvas = [24, 24]
+scales = [1, 2]
+
+[launch.main]
+out = "resources/launch"
+background = "#8455c1"
+icon = "app/icons/weeabu.png"
+icon_points = 96
+icon_round = 0.18
+images = [
+  { name = "Default.png", width = 320, height = 480, scale = 1 },
+  { name = "Default@2x.png", width = 320, height = 480, scale = 2 },
+  { name = "Default-568h@2x.png", width = 320, height = 568, scale = 2 },
+  { name = "Default-667h@2x.png", width = 375, height = 667, scale = 2 },
+  { name = "Default-736h@3x.png", width = 414, height = 736, scale = 3 },
+  { name = "Default-Portrait~ipad.png", width = 768, height = 1024, scale = 1 },
+  { name = "Default-Portrait@2x~ipad.png", width = 768, height = 1024, scale = 2 },
+  { name = "Default-Landscape~ipad.png", width = 1024, height = 768, scale = 1 },
+  { name = "Default-Landscape@2x~ipad.png", width = 1024, height = 768, scale = 2 },
+]
+
+# navigation and settings vectors of the pikabu android resources, tinted per state
+[glyphs.nav-normal]
+items = [
+  { from = "app/icons/reference/ic_pikabu_24.xml", name = "pikabu" },
+  { from = "app/icons/reference/ic_search_24.xml", name = "search" },
+  { from = "app/icons/reference/ic_profile_24.xml", name = "profile" },
+  { from = "app/icons/reference/ic_settings_24.xml", name = "settings" },
+]
+out = "app/icons"
+prefix = "Icon-nav-"
+suffix = "-normal"
+size = 24
+scales = [1, 2]
+color = "#757880"
+
+[glyphs.nav-selected]
+items = [
+  { from = "app/icons/reference/ic_pikabu_24.xml", name = "pikabu" },
+  { from = "app/icons/reference/ic_search_24.xml", name = "search" },
+  { from = "app/icons/reference/ic_profile_24.xml", name = "profile" },
+  { from = "app/icons/reference/ic_settings_24.xml", name = "settings" },
+]
+out = "app/icons"
+prefix = "Icon-nav-"
+suffix = "-selected"
+size = 24
+scales = [1, 2]
+color = "#548d27"
+
+[glyphs.settings-light]
+items = [
+  { from = "app/icons/reference/ic_settings_24.xml", name = "theme" },
+  { from = "app/icons/reference/ic_message_24.xml", name = "language" },
+  { from = "app/icons/reference/ic_profile_24.xml", name = "account" },
+  { from = "app/icons/reference/ic_hint_16.xml", name = "about" },
+  { from = "app/icons/reference/ic_arrow_right.xml", name = "arrow" },
+  { from = "app/icons/reference/ic_news_24.xml", name = "feed" },
+  { from = "app/icons/reference/ic_message_24.xml", name = "comments" },
+  { from = "app/icons/reference/ic_bin_20.xml", name = "cache" },
+]
+out = "app/icons"
+prefix = "Icon-settings-"
+suffix = "-light"
+size = 24
+scales = [1, 2]
+color = "#70737b"
+
+[glyphs.settings-dark]
+items = [
+  { from = "app/icons/reference/ic_settings_24.xml", name = "theme" },
+  { from = "app/icons/reference/ic_message_24.xml", name = "language" },
+  { from = "app/icons/reference/ic_profile_24.xml", name = "account" },
+  { from = "app/icons/reference/ic_hint_16.xml", name = "about" },
+  { from = "app/icons/reference/ic_arrow_right.xml", name = "arrow" },
+  { from = "app/icons/reference/ic_news_24.xml", name = "feed" },
+  { from = "app/icons/reference/ic_message_24.xml", name = "comments" },
+  { from = "app/icons/reference/ic_bin_20.xml", name = "cache" },
+]
+out = "app/icons"
+prefix = "Icon-settings-"
+suffix = "-dark"
+size = 24
+scales = [1, 2]
+color = "#8f939d"
+
+# there is no rootless jailbreak before ios 15, so the payload is the classic one: the bundle under
+# /Applications and nothing else
+[deb.deb]
+output = "weeabu-v${field:packaging/DEBIAN/control:Version}.deb"
+control = "packaging/DEBIAN/control"
+scripts = { postinst = "packaging/DEBIAN/postinst", postrm = "packaging/DEBIAN/postrm" }
+needs = ["version", "test", "check-app"]
+forbid_setuid = true
+forbid = ["usr", "Library", "var", "etc", "Applications/Weeabu.app/*.plist.tmp"]
+sh_check = ["DEBIAN/postinst", "DEBIAN/postrm"]
+require = [
+  "Applications/Weeabu.app/Info.plist",
+  "Applications/Weeabu.app/Weeabu",
+  "Applications/Weeabu.app/pikabu-ca.pem",
+  "Applications/Weeabu.app/emoji.pack",
+  "Applications/Weeabu.app/Roboto-Regular.ttf",
+  "Applications/Weeabu.app/Roboto-Medium.ttf",
+  "Applications/Weeabu.app/Roboto-Bold.ttf",
+  "Applications/Weeabu.app/sqmrak.jpg",
+  "Applications/Weeabu.app/Icon.png",
+  "Applications/Weeabu.app/Icon@2x.png",
+  "Applications/Weeabu.app/Icon-57.png",
+  "Applications/Weeabu.app/Icon-57@2x.png",
+  "Applications/Weeabu.app/Icon-60@2x.png",
+  "Applications/Weeabu.app/Icon-60@3x.png",
+  "Applications/Weeabu.app/Icon-72.png",
+  "Applications/Weeabu.app/Icon-72@2x.png",
+  "Applications/Weeabu.app/Icon-76.png",
+  "Applications/Weeabu.app/Icon-76@2x.png",
+  "Applications/Weeabu.app/Icon-83.5@2x.png",
+  "Applications/Weeabu.app/Default.png",
+  "Applications/Weeabu.app/Default@2x.png",
+  "Applications/Weeabu.app/Default-568h@2x.png",
+  "Applications/Weeabu.app/Default-667h@2x.png",
+  "Applications/Weeabu.app/Default-736h@3x.png",
+  "Applications/Weeabu.app/Default-Portrait~ipad.png",
+  "Applications/Weeabu.app/Default-Portrait@2x~ipad.png",
+  "Applications/Weeabu.app/Default-Landscape~ipad.png",
+  "Applications/Weeabu.app/Default-Landscape@2x~ipad.png",
+  "Applications/Weeabu.app/Icon-settings-theme-light.png",
+  "Applications/Weeabu.app/Icon-settings-theme-light@2x.png",
+  "Applications/Weeabu.app/Icon-settings-theme-dark.png",
+  "Applications/Weeabu.app/Icon-settings-theme-dark@2x.png",
+  "Applications/Weeabu.app/Icon-settings-language-light.png",
+  "Applications/Weeabu.app/Icon-settings-language-light@2x.png",
+  "Applications/Weeabu.app/Icon-settings-language-dark.png",
+  "Applications/Weeabu.app/Icon-settings-language-dark@2x.png",
+  "Applications/Weeabu.app/Icon-settings-account-light.png",
+  "Applications/Weeabu.app/Icon-settings-account-light@2x.png",
+  "Applications/Weeabu.app/Icon-settings-account-dark.png",
+  "Applications/Weeabu.app/Icon-settings-account-dark@2x.png",
+  "Applications/Weeabu.app/Icon-settings-about-light.png",
+  "Applications/Weeabu.app/Icon-settings-about-light@2x.png",
+  "Applications/Weeabu.app/Icon-settings-about-dark.png",
+  "Applications/Weeabu.app/Icon-settings-about-dark@2x.png",
+  "Applications/Weeabu.app/Icon-settings-arrow-light.png",
+  "Applications/Weeabu.app/Icon-settings-arrow-light@2x.png",
+  "Applications/Weeabu.app/Icon-settings-arrow-dark.png",
+  "Applications/Weeabu.app/Icon-settings-arrow-dark@2x.png",
+  "Applications/Weeabu.app/Icon-settings-feed-light.png",
+  "Applications/Weeabu.app/Icon-settings-feed-light@2x.png",
+  "Applications/Weeabu.app/Icon-settings-feed-dark.png",
+  "Applications/Weeabu.app/Icon-settings-feed-dark@2x.png",
+  "Applications/Weeabu.app/Icon-settings-comments-light.png",
+  "Applications/Weeabu.app/Icon-settings-comments-light@2x.png",
+  "Applications/Weeabu.app/Icon-settings-comments-dark.png",
+  "Applications/Weeabu.app/Icon-settings-comments-dark@2x.png",
+  "Applications/Weeabu.app/Icon-settings-cache-light.png",
+  "Applications/Weeabu.app/Icon-settings-cache-light@2x.png",
+  "Applications/Weeabu.app/Icon-settings-cache-dark.png",
+  "Applications/Weeabu.app/Icon-settings-cache-dark@2x.png",
+  "Applications/Weeabu.app/Icon-media-back.png",
+  "Applications/Weeabu.app/Icon-media-back@2x.png",
+  "Applications/Weeabu.app/Icon-media-back@3x.png",
+  "Applications/Weeabu.app/Icon-media-share.png",
+  "Applications/Weeabu.app/Icon-media-share@2x.png",
+  "Applications/Weeabu.app/Icon-media-share@3x.png",
+  "Applications/Weeabu.app/Icon-media-ellipsisvertical.png",
+  "Applications/Weeabu.app/Icon-media-ellipsisvertical@2x.png",
+  "Applications/Weeabu.app/Icon-media-ellipsisvertical@3x.png",
+  "Applications/Weeabu.app/Icon-media-speaker.png",
+  "Applications/Weeabu.app/Icon-media-speaker@2x.png",
+  "Applications/Weeabu.app/Icon-media-speaker@3x.png",
+  "Applications/Weeabu.app/Icon-media-speakerslash.png",
+  "Applications/Weeabu.app/Icon-media-speakerslash@2x.png",
+  "Applications/Weeabu.app/Icon-media-speakerslash@3x.png",
+]
+require_exec = ["Applications/Weeabu.app/Weeabu", "DEBIAN/postinst", "DEBIAN/postrm"]
+contains = [
+  { file = "DEBIAN/control", text = "Package: ru.sqmrak.weeabu" },
+  { file = "DEBIAN/control", text = "Architecture: iphoneos-arm" },
+  { file = "DEBIAN/control", text = "Depends: firmware (>= 5.0)" },
+]
+
+[[deb.deb.file]]
+from = "build/fat/Weeabu"
+to = "Applications/Weeabu.app/Weeabu"
+mode = "755"
+
+[[deb.deb.file]]
+from = "Info.plist"
+to = "Applications/Weeabu.app/Info.plist"
+
+[[deb.deb.file]]
+from = "vendor/mbedtls/pikabu-ca.pem"
+to = "Applications/Weeabu.app/pikabu-ca.pem"
+
+[[deb.deb.file]]
+from = "resources/emoji/emoji.pack"
+to = "Applications/Weeabu.app/emoji.pack"
+
+[[deb.deb.tree]]
+from = "app/icons"
+to = "Applications/Weeabu.app"
+exclude = ["Icon-master.png", "source", "source/*", "reference", "reference/*"]
+
+[[deb.deb.tree]]
+from = "app/fonts"
+to = "Applications/Weeabu.app"
+exclude = ["*.txt"]
+
+[[deb.deb.tree]]
+from = "resources/launch"
+to = "Applications/Weeabu.app"
+
+[[deb.deb.tree]]
+from = "resources/deb-icons"
+to = "Applications/Weeabu.app"
+replace = true
+
+[ipa.ipa]
+output = "Weeabu-v${field:packaging/DEBIAN/control:Version}.ipa"
+prefix = "Payload/Weeabu.app"
+needs = ["version", "test", "check-app"]
+
+[[ipa.ipa.file]]
+from = "build/fat/Weeabu"
+to = "Weeabu"
+mode = "755"
+
+[[ipa.ipa.file]]
+from = "Info.plist"
+to = "Info.plist"
+
+[[ipa.ipa.file]]
+from = "vendor/mbedtls/pikabu-ca.pem"
+to = "pikabu-ca.pem"
+
+[[ipa.ipa.file]]
+from = "resources/emoji/emoji.pack"
+to = "emoji.pack"
+
+[[ipa.ipa.tree]]
+from = "app/icons"
+to = ""
+exclude = ["Icon-master.png", "source", "source/*", "reference", "reference/*"]
+
+[[ipa.ipa.tree]]
+from = "app/fonts"
+to = ""
+exclude = ["*.txt"]
+
+[[ipa.ipa.tree]]
+from = "resources/launch"
+to = ""
+
+[[ipa.ipa.tree]]
+from = "resources/deb-icons"
+to = ""
+replace = true

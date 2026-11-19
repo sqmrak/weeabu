@@ -1,0 +1,40 @@
+exteria license
+
+rights already granted under earlier licenses remain in effect.
+
+this license covers the parts of exteria that their copyright holders have
+released under it. third-party code, fonts, artwork, sounds and other
+materials keep their own licenses. this license does not grant rights that
+their owners have not given.
+
+anyone may use, study, build and modify exteria for personal use.
+
+a person who is not a collaborator may make, publish and distribute a fork
+of exteria, with or without changes, for free or for a price. a fork is a
+version of exteria, not a separate project that uses parts of its code.
+using exteria code in a separate project requires written permission from
+sqmrak and any other copyright holders whose permission is needed.
+
+a collaborator is anyone who has contributed to exteria or has been a
+member of its development team. collaborators may work on exteria and
+make forks for that work. they need written permission from sqmrak before
+using exteria code in a separate project, including a project owned or
+published through another account. permission covers only the use agreed
+to in writing and does not replace permission needed from other copyright
+holders.
+
+when you publish or distribute a fork or a build of it, you must:
+
+- include this license and keep existing copyright and license notices
+- credit every developer named in exteria's list of developers
+- link to https://github.com/sqmrak/exteria
+- say clearly that your version is a fork and describe your changes
+- make the source code for your version available to its recipients
+- keep the licenses and notices required by third-party materials
+
+do not present a fork as the official exteria project or imply that the
+exteria team endorses it without permission.
+
+exteria is provided as is, without warranties, to the extent allowed by
+law. its authors are not responsible for damages arising from its use, to
+the extent allowed by law.

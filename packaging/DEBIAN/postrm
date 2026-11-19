@@ -1,0 +1,17 @@
+#!/bin/sh
+# the icon stays on the home screen until the cache is rebuilt without it
+set -e
+
+for tool in /usr/bin/uicache /usr/bin/uikittools; do
+  if [ -x "$tool" ]; then
+    "$tool" >/dev/null 2>&1 || true
+    exit 0
+  fi
+done
+for killer in /usr/bin/killall /bin/killall; do
+  if [ -x "$killer" ]; then
+    "$killer" -9 SpringBoard >/dev/null 2>&1 || true
+    exit 0
+  fi
+done
+exit 0

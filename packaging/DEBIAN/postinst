@@ -1,0 +1,16 @@
+#!/bin/sh
+# ios 5 and 6 keep the application cache in mobile's home
+set -e
+
+APP=/Applications/Weeabu.app
+[ -d "$APP" ] || exit 0
+
+if [ -x /usr/bin/uicache ]; then
+    if [ -f /var/mobile/Library/Caches/com.apple.mobile.installation.plist ] && [ -x /bin/su ]; then
+        /bin/su - mobile -c /usr/bin/uicache
+    else
+        /usr/bin/uicache -p "$APP" || /usr/bin/uicache
+    fi
+else
+    echo "weeabu: uicache is missing, springboard may not show the app" >&2
+fi

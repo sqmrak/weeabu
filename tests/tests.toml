@@ -1,0 +1,84 @@
+# host tests of the portable core: plain c99, no uikit and no ios toolchain, see tools/meow
+# the recorded pages are single string literals past the 4095 byte minimum c99 obliges a compiler
+# to accept, so only the programs that include a fixture silence that note
+
+[test.pk_media_drag]
+src = ["tests/test_pk_media_drag.c", "core/pk_media_drag.c"]
+cflags = ["-std=c99", "-Wall", "-Wextra", "-Wpedantic", "-O2", "-Icore"]
+libs = ["m"]
+
+[test.pk_photo_zoom]
+src = ["tests/test_pk_photo_zoom.c", "core/pk_photo_zoom.c"]
+cflags = ["-std=c99", "-Wall", "-Wextra", "-Wpedantic", "-O2", "-Icore"]
+libs = ["m"]
+
+[test.pk_spring]
+src = ["tests/test_pk_spring.c", "core/pk_spring.c"]
+cflags = ["-std=c99", "-Wall", "-Wextra", "-Wpedantic", "-O2", "-Icore"]
+libs = ["m"]
+
+[test.pk_popup]
+src = ["tests/test_pk_popup.c", "core/pk_popup.c"]
+cflags = ["-std=c99", "-Wall", "-Wextra", "-Wpedantic", "-O2", "-Icore"]
+libs = ["m"]
+
+[test.pk_accent]
+src = ["tests/test_pk_accent.c", "core/pk_accent.c"]
+cflags = ["-std=c99", "-Wall", "-Wextra", "-Wpedantic", "-O2", "-Icore"]
+libs = ["m"]
+
+[test.pk_text]
+src = ["tests/test_pk_text.c", "core/pk_text.c"]
+cflags = ["-std=c99", "-Wall", "-Wextra", "-Wpedantic", "-O2", "-Icore"]
+
+[test.pk_url]
+src = ["tests/test_pk_url.c", "core/pk_url.c", "core/pk_text.c"]
+cflags = ["-std=c99", "-Wall", "-Wextra", "-Wpedantic", "-O2", "-Icore"]
+
+[test.pk_html]
+src = ["tests/test_pk_html.c", "core/pk_html.c", "core/pk_text.c"]
+cflags = ["-std=c99", "-Wall", "-Wextra", "-Wpedantic", "-O2", "-Icore"]
+
+[test.pk_comments]
+src = ["tests/test_pk_comments.c", "core/pk_comments.c", "core/pk_story.c", "core/pk_html.c", "core/pk_text.c"]
+cflags = ["-std=c99", "-Wall", "-Wextra", "-Wpedantic", "-O2", "-Icore", "-Wno-overlength-strings"]
+inputs = ["tests/story_fixture.inc"]
+
+[test.pk_story]
+src = ["tests/test_pk_story.c", "core/pk_story.c", "core/pk_html.c", "core/pk_text.c", "core/pk_url.c"]
+cflags = ["-std=c99", "-Wall", "-Wextra", "-Wpedantic", "-O2", "-Icore", "-Wno-overlength-strings"]
+inputs = ["tests/story_fixture.inc"]
+
+[test.pk_feed]
+src = ["tests/test_pk_feed.c", "core/pk_feed.c", "core/pk_story.c", "core/pk_html.c", "core/pk_text.c", "core/pk_url.c"]
+cflags = ["-std=c99", "-Wall", "-Wextra", "-Wpedantic", "-O2", "-Icore", "-Wno-overlength-strings"]
+inputs = ["tests/feed_fixture.inc", "tests/feed_cards_fixture.inc"]
+
+[test.pk_tls_rules]
+src = ["tests/test_pk_tls_rules.c", "core/pk_tls_rules.c"]
+cflags = ["-std=c99", "-Wall", "-Wextra", "-Wpedantic", "-O2", "-Icore"]
+
+[test.pk_v1_signature]
+src = ["tests/test_pk_v1_signature.c", "core/pk_v1_signature.c"]
+cflags = ["-std=c99", "-Wall", "-Wextra", "-Wpedantic", "-O2", "-Icore"]
+libs = ["crypto"]
+
+[test.pk_media_layout]
+src = ["tests/test_pk_media_layout.c", "core/pk_media_layout.c"]
+cflags = ["-std=c99", "-Wall", "-Wextra", "-Wpedantic", "-O2", "-Icore"]
+
+[test.pk_device]
+src = ["tests/test_pk_device.c", "core/pk_device.c"]
+cflags = ["-std=c99", "-Wall", "-Wextra", "-Wpedantic", "-O2", "-Icore"]
+
+[test.pk_settings]
+src = ["tests/test_pk_settings.c", "core/pk_settings.c"]
+cflags = ["-std=c99", "-Wall", "-Wextra", "-Wpedantic", "-O2", "-Icore"]
+
+[test.emoji]
+src = ["tests/test_emoji.c", "core/emoji/exteria_emoji.c", "core/emoji/exteria_emoji_data.c"]
+cflags = ["-std=c99", "-Wall", "-Wextra", "-Wpedantic", "-O2", "-Icore", "-Icore/emoji"]
+
+[test.emoji_bounds]
+src = ["tests/test_emoji_bounds.c", "core/emoji/exteria_emoji.c", "core/emoji/exteria_emoji_data.c"]
+cflags = ["-std=c99", "-Wall", "-Wextra", "-Wpedantic", "-O2", "-Icore", "-Icore/emoji"]
